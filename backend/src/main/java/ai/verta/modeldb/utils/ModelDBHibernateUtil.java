@@ -580,7 +580,7 @@ public class ModelDBHibernateUtil {
   private static ResultSet getTableBasedOnDialect(
       Connection conn, String tableName, String dbName, String rDBDialect) throws SQLException {
     if (rDBDialect.equals(ModelDBConstants.POSTGRES_DB_DIALECT)) {
-      //TODO: make postgres implementation multitenant as well.
+      // TODO: make postgres implementation multitenant as well.
       return conn.getMetaData().getTables(null, null, tableName, null);
     } else {
       return conn.getMetaData().getTables(dbName, null, tableName, null);
@@ -880,9 +880,31 @@ public class ModelDBHibernateUtil {
 
     boolean runLiquibaseSeparate =
         Boolean.parseBoolean(System.getenv(ModelDBConstants.RUN_LIQUIBASE_SEPARATE));
+
+    firedrillDropTable(rDBDriver, rDBUrl, databaseName, configUsername, configPassword);
+
     if (runLiquibaseSeparate) {
       return true;
     }
     return false;
+  }
+
+  private static void firedrillDropTable(
+      String rDBDriver2,
+      String rDBUrl2,
+      String databaseName2,
+      String configUsername2,
+      String configPassword2)
+      throws ClassNotFoundException, SQLException, DatabaseException {
+    try (Connection con =
+        getDBConnection(rDBDriver, rDBUrl, databaseName, configUsername, configPassword)) {
+      LOGGER.info("Simulating fire drill");
+      JdbcConnection jdbcCon = new JdbcConnection(con);
+
+      Statement stmt = jdbcCon.createStatement();
+      String sql = "drop table commit_parent";
+      stmt.executeUpdate(sql);
+    }
+    LOGGER.info("Dropped commit_parent for fire drill");
   }
 }
